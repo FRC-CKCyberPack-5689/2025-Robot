@@ -8,9 +8,8 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import frc.robot.RMap.ArmPositions;
 import frc.robot.RMap.Globals;
+import frc.robot.RMap.Globals.speedSettings;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -23,9 +22,12 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
+    // don't touch this is frc's line of code
     CommandScheduler.getInstance().run();
-    Globals.myled.setData(Globals.myledBuff);
-    Globals.rainbowfinal.applyTo(Globals.myledBuff);
+
+    SmartDashboard.putNumber("current angle",-Globals.gyro.getAngle());
+    // Globals.myled.setData(Globals.myledBuff);
+    // Globals.rainbowfinal.applyTo(Globals.myledBuff);
   }
 
   @Override
@@ -58,11 +60,12 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
-    Globals.drive_SBS.setSlow(false);
-    Globals.arm_SBS.setArm(Globals.armMode.HOME).schedule();
-    if (Globals.arm_SBS.isLocked()) {
-      Globals.arm_SBS.lockArm();
-    }
+    Globals.drive_SBS.setSlow(speedSettings.MAX);
+    // Globals.arm_SBS.setArm(Globals.armMode.HOME).schedule();
+
+    // if (Globals.arm_SBS.isLocked()) {
+    //   Globals.arm_SBS.lockArm();
+    // }
 
     if (Globals.drive_SBS.drive_type) {
       SmartDashboard.putString("DriveType", "Gyro Drive");
@@ -74,7 +77,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    SmartDashboard.putNumber("current angle",Globals.gyro.getAngle());
   }
 
   @Override

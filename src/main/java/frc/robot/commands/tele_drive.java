@@ -8,6 +8,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RMap.Globals;
 import frc.robot.RMap.SpeedConstants;
+import frc.robot.RMap.Globals.speedSettings;
 
 public class tele_drive extends Command {
   /** Creates a new tele_drive. */
@@ -32,12 +33,12 @@ public class tele_drive extends Command {
     if (Globals.drive_SBS.drive_type) {
       fwd_speed = calculateGyroDrive(Globals.controller.getLeftX(),Globals.controller.getLeftY(), fwd_speed, 0);
       strafe_speed = calculateGyroDrive(Globals.controller.getLeftX(), Globals.controller.getLeftY(), strafe_speed, 1);
-      rot_speed = calculateDrive(Globals.controller.getRightX(), rot_speed);
     } else {
       fwd_speed = calculateDrive(Globals.controller.getLeftY(), fwd_speed);
       strafe_speed = calculateDrive(Globals.controller.getLeftX(), strafe_speed);
-      rot_speed = calculateDrive(Globals.controller.getRightX(), rot_speed);
     }
+    rot_speed = MathUtil.clamp(calculateRotation(Globals.controller.getRightX(), rot_speed),-0.8, 0.8);
+
     Globals.drive_SBS.driveCartesian(fwd_speed, strafe_speed, rot_speed);
   }
 
@@ -59,11 +60,45 @@ public class tele_drive extends Command {
 
   public double calculateDrive(double input, double cspeed) {
     double calculated_speed = 0;
+    if (input*cspeed>0) {
+      if (Math.abs(input) > Math.abs(cspeed)) {
+        calculated_speed = Math.min(cspeed+SpeedConstants.kDRIVE_TRAIN_MAX_ACCEL, input);
+      } else {
+        calculated_speed = Math.max(input, cspeed-SpeedConstants.kDRIVE_TRAIN_MAX_DECEL);
+      }
+    } else {
+      calculated_speed = cspeed-SpeedConstants.kDRIVE_TRAIN_MAX_DECEL;
+    }
     calculated_speed = (input - cspeed) * SpeedConstants.kDRIVE_TRAIN_MAX_ACCEL + cspeed;
 
-    if (Globals.drive_SBS.isSlow()) {
-      calculated_speed*=0.8;
+    if (Globals.drive_SBS.isSlow() == speedSettings.SLOW) {
+      calculated_speed*=0.85;
+    } else if (Globals.drive_SBS.isSlow() == speedSettings.MEDIUM) {
+      calculated_speed *= 0.9;
     }
+    return calculated_speed;
+  }
+
+  public double calculateRotation(double input, double cspeed) {
+    double calculated_speed = 0;
+    if (input*cspeed>0) {
+      if (Math.abs(input) > Math.abs(cspeed)) {
+        calculated_speed = Math.min(cspeed+SpeedConstants.kDRIVE_TRAIN_ROT_ACCEL, input);
+      } else {
+        calculated_speed = Math.max(input, cspeed-SpeedConstants.kDRIVE_TRAIN_ROT_DECEL);
+      }
+    } else {
+      calculated_speed = cspeed-SpeedConstants.kDRIVE_TRAIN_ROT_DECEL;
+    }
+    calculated_speed = (input - cspeed) * SpeedConstants.kDRIVE_TRAIN_ROT_ACCEL + cspeed;
+    
+    
+    if (Globals.drive_SBS.isSlow() == speedSettings.SLOW) {
+      calculated_speed*=0.85;
+    } else if (Globals.drive_SBS.isSlow() == speedSettings.MEDIUM) {
+      calculated_speed *= 0.9;
+    }
+
     return calculated_speed;
   }
 
@@ -78,8 +113,10 @@ public class tele_drive extends Command {
     }
     calculated_speed = (calculated_speed - cspeed) * SpeedConstants.kDRIVE_TRAIN_MAX_ACCEL + cspeed;
 
-    if (Globals.drive_SBS.isSlow()) {
-      calculated_speed*=0.8;
+    if (Globals.drive_SBS.isSlow() == speedSettings.SLOW) {
+      calculated_speed*=0.85;
+    } else if (Globals.drive_SBS.isSlow() == speedSettings.MEDIUM) {
+      calculated_speed *= 0.9;
     }
     return MathUtil.clamp(calculated_speed,-1,1);
   }

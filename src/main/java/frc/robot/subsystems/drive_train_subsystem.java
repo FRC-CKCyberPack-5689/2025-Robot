@@ -7,12 +7,15 @@ package frc.robot.subsystems;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RMap.*;
+import frc.robot.RMap.Globals.speedSettings;
 
 public class drive_train_subsystem extends SubsystemBase {
   /** Creates a new drive_train_subsystem. */
@@ -23,7 +26,9 @@ public class drive_train_subsystem extends SubsystemBase {
   private MecanumDrive mecanumDrive;
   public boolean drive_type = false;
   private double lastPress = 0;
-  private boolean isSlow;
+  private PIDController pidCon;
+
+  private speedSettings speed;
   //false is relative, true is gyro
 
   public drive_train_subsystem() {
@@ -31,6 +36,8 @@ public class drive_train_subsystem extends SubsystemBase {
     front_right   = new SparkMax(MotorConstants.kFR_WHEEL_ID, MotorType.kBrushless);
     back_left     = new SparkMax(MotorConstants.kBL_WHEEL_ID, MotorType.kBrushless);
     back_right    = new SparkMax(MotorConstants.kBR_WHEEL_ID, MotorType.kBrushless);
+
+    pidCon = new PIDController(0.0115, 0, 0.0001);
     
     mecanumDrive = new MecanumDrive(front_left, back_left, front_right, back_right);
     mecanumDrive.setDeadband(0.05);
@@ -56,9 +63,21 @@ public class drive_train_subsystem extends SubsystemBase {
       }
   }
 
-  /*TODO: This will happen so fast you wont even see the robot move */
-  public Command autoDriveForward() {
-    return this.runEnd(() -> driveCartesian(0.05, 0, 0), () -> stop());
+  public Command autoDriveX(double seconds,double x) {
+    return this.run(() -> {
+      driveCartesian(x, 0, 0);
+    }).withTimeout(seconds);
+  }
+
+
+  public Command autoRotate(double targetAngle) {
+    return this.run(() -> {
+      double error = pidCon.calculate(targetAngle, -Globals.gyro.getAngle());
+
+      error = MathUtil.clamp(error/2, -0.4, 0.4);
+      System.out.println(error);
+      driveCartesian(0, 0, -error);
+    }).until(() -> -Globals.gyro.getAngle() >= targetAngle-1 && -Globals.gyro.getAngle() <= targetAngle+1).withTimeout(5.0);
   }
 
   public void resetGyro() {
@@ -68,10 +87,10 @@ public class drive_train_subsystem extends SubsystemBase {
     lastPress = Timer.getFPGATimestamp();
   }
 
-  public void setSlow(boolean slow) {
-    isSlow = slow;
+  public void setSlow(speedSettings slow) {
+    speed = slow;
   }
-  public boolean isSlow() {
-    return isSlow;
+  public speedSettings isSlow() {
+    return speed;
   }
 }

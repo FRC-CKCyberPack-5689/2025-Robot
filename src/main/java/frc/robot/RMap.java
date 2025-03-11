@@ -4,14 +4,14 @@
 
 package frc.robot;
 
+
+import org.photonvision.PhotonCamera;
+
 import com.revrobotics.servohub.ServoChannel;
 import com.revrobotics.servohub.ServoHub;
 import com.revrobotics.servohub.ServoChannel.ChannelId;
 
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
-import edu.wpi.first.wpilibj.AddressableLED;
-import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -27,16 +27,19 @@ public class RMap {
 
         public static ADIS16470_IMU gyro;
         public static CommandXboxController controller;
+        public static PhotonCamera camera;
+
         public static SendableChooser<Command> autonomous_command;
+
         public static ServoHub servoH;
         public static ServoChannel baseServo;
         public static ServoChannel armServo;
 
-        public static LEDPattern rainbow;
-        public static LEDPattern rainbowfinal;
+        // public static LEDPattern rainbow;
+        // public static LEDPattern rainbowfinal;
 
-        public static AddressableLED myled;
-        public static AddressableLEDBuffer myledBuff;
+        // public static AddressableLED myled;
+        // public static AddressableLEDBuffer myledBuff;
 
         public static enum armMode {
             REEF,
@@ -50,7 +53,14 @@ public class RMap {
             UP,
             DOWN,
             LEFT,
-            RIGHT
+            RIGHT,
+            AUTO1
+          }
+
+          public static enum speedSettings {
+            MAX,
+            MEDIUM,
+            SLOW
           }
     }
 
@@ -76,8 +86,8 @@ public class RMap {
         public static final int kBR_WHEEL_ID = 5;
         
         //REAR IS FOLLOWING FRONT
-        public static final int kRE_ARM_BASE_ID = 7;
-        public static final int kFR_ARM_BASE_ID = 6;
+        public static final int kRE_ARM_BASE_ID = 6;
+        public static final int kFR_ARM_BASE_ID = 7;
         
         public static final int kARM_JOINT_ID = 8;
         public static final int kINTAKE_ID = 9;
@@ -90,7 +100,10 @@ public class RMap {
 
     public class SpeedConstants{
         public static final double kDRIVE_TRAIN_MAX_SPEED = 1;
-        public static final double kDRIVE_TRAIN_MAX_ACCEL = 0.08;
+        public static final double kDRIVE_TRAIN_MAX_ACCEL = 0.1;
+        public static final double kDRIVE_TRAIN_MAX_DECEL = 0.2;
+        public static final double kDRIVE_TRAIN_ROT_ACCEL = 0.15;
+        public static final double kDRIVE_TRAIN_ROT_DECEL = 0.15;
 
         public static final class kARM_BASE {
             public static final double kP = 0.05999999865889549;
@@ -99,7 +112,6 @@ public class RMap {
             public static final double kFF = 0;
             public static final double kMIN = -0.35;
             public static final double kMAX = 0.35;
-            
         }
 
         public static final class kARM_JOINT {
@@ -112,8 +124,10 @@ public class RMap {
         }
 
         
-        public static final double kBALL_INTAKE = 0.4;
-        public static final double kCORAL_INTAKE = -0.3;
+        public static final double kBALL_INTAKE = -0.4;
+        public static final double kBALL_SHOOT = 0.3;
+        public static final double kCORAL_INTAKE = 0.7;
+        public static final double kCORAL_SHOOT = -0.8;
 
         public static final int kARM_SERVO_UNLOCK = 1254;
         public static final int kARM_SERVO_LOCK = 1860;
@@ -133,17 +147,18 @@ public class RMap {
     }
 
     public static class ArmPositions {
-        public static MotorPositions CoralLVL1        = new MotorPositions(3, 5.5);
-        public static MotorPositions CoralLVL2        = new MotorPositions(4.82, 12);
-        public static MotorPositions CoralLVL3        = new MotorPositions(5.5, 17.5);
-        public static MotorPositions CoralLVL4        = new MotorPositions(3,3);
+        public static MotorPositions CoralLVL1        = new MotorPositions(2.42, 7);
+        public static MotorPositions CoralLVL2        = new MotorPositions(4.8, 11);
+        public static MotorPositions CoralLVL3        = new MotorPositions(7, 20);
+        public static MotorPositions CoralLVL4        = new MotorPositions(7,22);
         public static MotorPositions CoralGInPrep     = new MotorPositions(3,4);
         public static MotorPositions CoralGIn         = new MotorPositions(7,0);
-        public static MotorPositions CoralSIn         = new MotorPositions(3,3);
-        public static MotorPositions BallLVL2         = new MotorPositions(4.5, 14.7);
-        public static MotorPositions BallLVL1         = new MotorPositions(3.85, 8.5);
-        public static MotorPositions BallG            = new MotorPositions(6, 0.5);
-        public static MotorPositions BallTower        = new MotorPositions(4, 3.5);
+        public static MotorPositions CoralSIn         = new MotorPositions(4.7,14);
+        public static MotorPositions BallLVL2         = new MotorPositions(5.4, 15);
+        public static MotorPositions BallLVLBump      = new MotorPositions(6.3, 18);
+        public static MotorPositions BallLVL1         = new MotorPositions(3.5, 9);
+        public static MotorPositions BallG            = new MotorPositions(5.5, 1);
+        public static MotorPositions BallInAuto       = new MotorPositions(3, 1);
         public static MotorPositions Home             = new MotorPositions(1, 1);
         public static MotorPositions ClimbPrime       = new MotorPositions(3, 5.5);
         public static MotorPositions ClimbCollapse    = new MotorPositions(1, 2);

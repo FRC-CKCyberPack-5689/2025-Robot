@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems;
 
-import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
@@ -12,14 +11,14 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.RMap.*;
 import frc.robot.RMap.Globals.POV;
 import frc.robot.RMap.Globals.armMode;
+import frc.robot.RMap.Globals.speedSettings;
 
 public class arm_subsystem extends SubsystemBase {
   /** Creates a new arm_subsystem. */
@@ -58,14 +57,17 @@ public class arm_subsystem extends SubsystemBase {
 
     armBaseEnc = armBase.getEncoder();
     armJointEnc = armJoint.getEncoder();
+
+    currentMode = armMode.HOME;
+    currentPos = ArmPositions.Home;
     }
 
   @Override
   public void periodic() {
-    if (currentPos == ArmPositions.Home) {
-      Globals.drive_SBS.setSlow(false);
-    } else {
-      Globals.drive_SBS.setSlow(true);
+    if (currentPos == ArmPositions.Home || currentPos == ArmPositions.BallG) {
+      Globals.drive_SBS.setSlow(speedSettings.MAX);
+    } else{
+      Globals.drive_SBS.setSlow(speedSettings.SLOW);
     }
   }
 
@@ -77,10 +79,14 @@ public class arm_subsystem extends SubsystemBase {
     intake.set(0);
   }
 
+  public Command AutoIntake (double speed, double duration) {
+    return this.runEnd(() -> Globals.arm_SBS.setIntakeSpeed(speed),() -> Globals.arm_SBS.stopIntake()).withTimeout(duration);
+  }
+
   private void writeMotors(MotorPositions positions) {
     if (positions == ArmPositions.Home) {
-      armBaseCon.setReference(armBaseEnc.getPosition()/2, ControlType.kPosition);
-      armJointCon.setReference(armJointEnc.getPosition()/2, ControlType.kPosition);
+      armBaseCon.setReference(Math.max(armBaseEnc.getPosition()/2,ArmPositions.Home.k_armBasePosition), ControlType.kPosition);
+      armJointCon.setReference(Math.max(armJointEnc.getPosition()/2,ArmPositions.Home.k_armJointPosition), ControlType.kPosition);
       new WaitCommand(0.5).andThen(() -> {
         armBaseCon.setIAccum(0);
         armJointCon.setIAccum(0);
@@ -171,7 +177,11 @@ public class arm_subsystem extends SubsystemBase {
             break;
 
             case LEFT:
-            writeMotors(ArmPositions.BallTower);
+            writeMotors(ArmPositions.BallLVLBump);
+            break;
+
+            case AUTO1:
+            writeMotors(ArmPositions.BallInAuto);
             break;
           }
           break;
@@ -247,5 +257,10 @@ public class arm_subsystem extends SubsystemBase {
 
   public boolean isLocked() {
     return isLocked;
+  }
+
+  public void resetPos() {
+    armBaseEnc.setPosition(0);
+    armJointEnc.setPosition(0);
   }
 }

@@ -4,19 +4,11 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
+import org.photonvision.PhotonCamera;
 
 import com.revrobotics.servohub.ServoHub;
-import com.revrobotics.servohub.config.ServoHubConfig;
-import com.revrobotics.servohub.config.ServoChannelConfig.BehaviorWhenDisabled;
-import com.revrobotics.servohub.ServoHub.ResetMode;
-
-import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
-import edu.wpi.first.wpilibj.AddressableLED;
-import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -27,6 +19,9 @@ import frc.robot.RMap.Globals;
 import frc.robot.RMap.IOConstants;
 import frc.robot.RMap.MotorConstants;
 import frc.robot.RMap.SpeedConstants;
+import frc.robot.autocmds.MiddleReefAuto;
+import frc.robot.autocmds.testAutoAlgaeCamView;
+import frc.robot.autocmds.testHomeAutoCam;
 import frc.robot.commands.tele_drive;
 import frc.robot.subsystems.arm_subsystem;
 import frc.robot.subsystems.drive_train_subsystem;
@@ -37,39 +32,48 @@ public class RobotContainer {
     Globals.arm_SBS = new arm_subsystem();
     Globals.gyro = new ADIS16470_IMU();
     Globals.servoH = new ServoHub(MotorConstants.kSERVO_HUB_ID);
+    Globals.camera = new PhotonCamera("camera");
 
-    ServoHubConfig config = new ServoHubConfig();
+    CameraServer.addServer("http://photonvision.local/stream.mjpg", 1182);
+    CameraServer.startAutomaticCapture();
 
-    config.channel0.disableBehavior(BehaviorWhenDisabled.kSupplyPower);
-    config.channel1.disableBehavior(BehaviorWhenDisabled.kSupplyPower);
+    // ServoHubConfig config = new ServoHubConfig();
 
-    Globals.servoH.configure(config, ResetMode.kResetSafeParameters);
+    // config.channel0.disableBehavior(BehaviorWhenDisabled.kSupplyPower);
+    // config.channel1.disableBehavior(BehaviorWhenDisabled.kSupplyPower);
 
-    Globals.baseServo = Globals.servoH.getServoChannel(MotorConstants.kBASE_SERVO_ID);
-    Globals.armServo = Globals.servoH.getServoChannel(MotorConstants.kARM_SERVO_ID);
-    Globals.baseServo.setPowered(true);
-    Globals.armServo.setPowered(true);
-    Globals.baseServo.setEnabled(true);
-    Globals.armServo.setEnabled(true);
+    // Globals.servoH.configure(config, ResetMode.kResetSafeParameters);
+
+    // Globals.baseServo = Globals.servoH.getServoChannel(MotorConstants.kBASE_SERVO_ID);
+    // Globals.armServo = Globals.servoH.getServoChannel(MotorConstants.kARM_SERVO_ID);
+    // Globals.baseServo.setPowered(true);
+    // Globals.armServo.setPowered(true);
+    // Globals.baseServo.setEnabled(true);
+    // Globals.armServo.setEnabled(true);
 
     Globals.controller = new CommandXboxController(IOConstants.kCONTROLLER_PORT);
 
-    Globals.myled = new AddressableLED(0);
-    Globals.myledBuff = new AddressableLEDBuffer(100);
+    // Globals.myled = new AddressableLED(0);
+    // Globals.myledBuff = new AddressableLEDBuffer(100);
 
-    Globals.rainbow = LEDPattern.rainbow(255, 128);
-    Distance distance = Meters.of(1/120.0);
-    Globals.rainbowfinal = Globals.rainbow.scrollAtAbsoluteSpeed(MetersPerSecond.of(1), distance);
-    Globals.rainbowfinal.applyTo(Globals.myledBuff);
+    // Globals.rainbow = LEDPattern.rainbow(255, 128);
+    // Distance distance = Meters.of(1/120.0);
+    // Globals.rainbowfinal = Globals.rainbow.scrollAtAbsoluteSpeed(MetersPerSecond.of(1), distance);
+    // Globals.rainbowfinal.applyTo(Globals.myledBuff);
 
-    Globals.myled.setLength(Globals.myledBuff.getLength());
+    // Globals.myled.setLength(Globals.myledBuff.getLength());
 
-    Globals.myled.start();
+    // Globals.myled.start();
     
 
     Globals.autonomous_command = new SendableChooser<>();
     Globals.autonomous_command.setDefaultOption("None", null);
-    Globals.autonomous_command.addOption("drive forward", Globals.drive_SBS.autoDriveForward());
+    Globals.autonomous_command.addOption("drive forward", Globals.drive_SBS.autoDriveX(1.5,-0.2));
+    Globals.autonomous_command.addOption("SPIN (please do not select this is EXPLICITLY FOR TESTING)",
+                                             Globals.drive_SBS.autoRotate(Globals.gyro.getAngle()-90));
+    Globals.autonomous_command.addOption("Middle: Coral LVL1", new MiddleReefAuto());
+    Globals.autonomous_command.addOption("test auto cam", new testAutoAlgaeCamView());
+    Globals.autonomous_command.addOption("test auto cam 2", new testHomeAutoCam());
     SmartDashboard.putData(Globals.autonomous_command);
 
     configureBindings();
@@ -78,13 +82,18 @@ public class RobotContainer {
   private void configureBindings() {
     Globals.drive_SBS.setDefaultCommand(new tele_drive());
 
-    Globals.controller.leftBumper().whileTrue(new StartEndCommand(() -> Globals.arm_SBS.setIntakeSpeed(SpeedConstants.kCORAL_INTAKE),
+    Globals.controller.leftBumper().whileTrue(new StartEndCommand(() -> Globals.arm_SBS.setIntakeSpeed(SpeedConstants.kBALL_INTAKE),
     () -> Globals.arm_SBS.stopIntake()));
-    Globals.controller.rightBumper().whileTrue(new StartEndCommand(() -> Globals.arm_SBS.setIntakeSpeed(SpeedConstants.kBALL_INTAKE),
+    Globals.controller.rightBumper().whileTrue(new StartEndCommand(() -> Globals.arm_SBS.setIntakeSpeed(SpeedConstants.kBALL_SHOOT),
     () -> Globals.arm_SBS.stopIntake()));
 
     Globals.controller.rightStick().onTrue(new InstantCommand(() -> Globals.drive_SBS.changeDrive()));
     Globals.controller.leftStick().onTrue(new InstantCommand(() -> Globals.drive_SBS.resetGyro()));
+
+    Globals.controller.rightTrigger().whileTrue(new StartEndCommand(() -> Globals.arm_SBS.setIntakeSpeed(SpeedConstants.kCORAL_SHOOT),
+    () -> Globals.arm_SBS.stopIntake()));
+    Globals.controller.leftTrigger().whileTrue(new StartEndCommand(() -> Globals.arm_SBS.setIntakeSpeed(SpeedConstants.kCORAL_INTAKE),
+    () -> Globals.arm_SBS.stopIntake()));
 
     Globals.controller.x().onTrue(Globals.arm_SBS.setArm(Globals.armMode.REEF));
     Globals.controller.a().onTrue(Globals.arm_SBS.setArm(Globals.armMode.ALGAE));
@@ -92,8 +101,8 @@ public class RobotContainer {
     Globals.controller.y().onTrue(Globals.arm_SBS.setArm(Globals.armMode.HOME));
 
 
-    Globals.controller.start().onTrue(Globals.arm_SBS.setArm(Globals.armMode.CLIMB));
-    Globals.controller.back().onTrue(new InstantCommand(() -> Globals.arm_SBS.lockArm()));
+    // Globals.controller.start().onTrue(Globals.arm_SBS.setArm(Globals.armMode.CLIMB));
+    Globals.controller.back().onTrue(new InstantCommand(() -> Globals.arm_SBS.resetPos()));
 
     Globals.controller.povLeft().onTrue(Globals.arm_SBS.setArm(Globals.POV.LEFT));
     Globals.controller.povRight().onTrue(Globals.arm_SBS.setArm(Globals.POV.RIGHT));
