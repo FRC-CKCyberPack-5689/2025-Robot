@@ -15,11 +15,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.RMap.Globals;
 import frc.robot.RMap.IOConstants;
 import frc.robot.RMap.MotorConstants;
 import frc.robot.RMap.SpeedConstants;
 import frc.robot.autocmds.MiddleReefAuto;
+import frc.robot.autocmds.TrajectoryTest;
 import frc.robot.autocmds.testAutoAlgaeCamView;
 import frc.robot.autocmds.testHomeAutoCam;
 import frc.robot.commands.tele_drive;
@@ -28,11 +30,11 @@ import frc.robot.subsystems.drive_train_subsystem;
 
 public class RobotContainer {
   public RobotContainer() {
+    Globals.gyro = new ADIS16470_IMU();
     Globals.drive_SBS = new drive_train_subsystem();
     Globals.arm_SBS = new arm_subsystem();
-    Globals.gyro = new ADIS16470_IMU();
     Globals.servoH = new ServoHub(MotorConstants.kSERVO_HUB_ID);
-    Globals.camera = new PhotonCamera("camera");
+    Globals.armCamera = new PhotonCamera("camera");
 
     CameraServer.addServer("http://photonvision.local/stream.mjpg", 1182);
     CameraServer.startAutomaticCapture();
@@ -74,6 +76,8 @@ public class RobotContainer {
     Globals.autonomous_command.addOption("Middle: Coral LVL1", new MiddleReefAuto());
     Globals.autonomous_command.addOption("test auto cam", new testAutoAlgaeCamView());
     Globals.autonomous_command.addOption("test auto cam 2", new testHomeAutoCam());
+    Globals.autonomous_command.addOption("new traj etste", new TrajectoryTest());
+
     SmartDashboard.putData(Globals.autonomous_command);
 
     configureBindings();

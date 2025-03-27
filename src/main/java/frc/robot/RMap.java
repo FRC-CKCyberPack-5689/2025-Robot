@@ -11,10 +11,17 @@ import com.revrobotics.servohub.ServoChannel;
 import com.revrobotics.servohub.ServoHub;
 import com.revrobotics.servohub.ServoChannel.ChannelId;
 
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.arm_subsystem;
 import frc.robot.subsystems.drive_train_subsystem;
 
@@ -27,7 +34,9 @@ public class RMap {
 
         public static ADIS16470_IMU gyro;
         public static CommandXboxController controller;
-        public static PhotonCamera camera;
+        // public static PhotonCamera camera;
+        public static PhotonCamera armCamera; // changed from "camera"
+        public static PhotonCamera sideCamera; 
 
         public static SendableChooser<Command> autonomous_command;
 
@@ -90,7 +99,8 @@ public class RMap {
         public static final int kFR_ARM_BASE_ID = 7;
         
         public static final int kARM_JOINT_ID = 8;
-        public static final int kINTAKE_ID = 9;
+        public static final int kINTAKE_BOT_ID = 9;
+        public static final int kINTAKE_TOP_ID = 11;
 
         public static final int kSERVO_HUB_ID = 10;
 
@@ -105,6 +115,37 @@ public class RMap {
         public static final double kDRIVE_TRAIN_ROT_ACCEL = 0.15;
         public static final double kDRIVE_TRAIN_ROT_DECEL = 0.15;
 
+        public static final double kTrackWidth = Units.inchesToMeters(20.25);
+        public static final double kTrackBase = Units.inchesToMeters(23.0);
+
+        public static final double kMaxMetersPerSecond = 3.0;
+        public static final double kMaxAccelerationSquared = 3.0;
+        public static final double kMaxAngularRate = Math.PI;
+        public static final double kMaxAngularAccelRate = Math.PI;
+
+        public static final double kPXController = 0.5;
+        public static final double kPYController = 0.5;
+        public static final double kPThetaController = 0.5;
+
+        public static final MecanumDriveKinematics kDriveKinematics =
+            new MecanumDriveKinematics(
+                new Translation2d(kTrackBase / 2, kTrackWidth / 2),
+                new Translation2d(kTrackBase / 2, -kTrackWidth / 2),
+                new Translation2d(-kTrackBase / 2, kTrackWidth / 2),
+                new Translation2d(-kTrackBase / 2, -kTrackWidth / 2));
+
+        public static final TrapezoidProfile.Constraints kThetaControllerConstraints =
+            new TrapezoidProfile.Constraints(kMaxAngularRate, kMaxAngularAccelRate);
+
+        public static final SimpleMotorFeedforward kFeedForward =
+            new SimpleMotorFeedforward(1, 2.45, 0.43);
+
+        public static final TrajectoryConfig trajConfig =
+            new TrajectoryConfig(1.0, 1)
+                .setKinematics(SpeedConstants.kDriveKinematics);
+
+
+
         public static final class kARM_BASE {
             public static final double kP = 0.05999999865889549;
             public static final double kI = 0.00005;
@@ -112,6 +153,7 @@ public class RMap {
             public static final double kFF = 0;
             public static final double kMIN = -0.35;
             public static final double kMAX = 0.35;
+            public static final double kIMAX = 1;
         }
 
         public static final class kARM_JOINT {
@@ -121,6 +163,7 @@ public class RMap {
             public static final double kFF = 0;
             public static final double kMIN = -0.325;
             public static final double kMAX = 0.325;
+            public static final double kIMAX = 1;
         }
 
         

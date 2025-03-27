@@ -59,6 +59,7 @@ public class tele_drive extends Command {
    */
 
   public double calculateDrive(double input, double cspeed) {
+    input = MathUtil.applyDeadband(input, 0.05);
     double calculated_speed = 0;
     if (input*cspeed>0) {
       if (Math.abs(input) > Math.abs(cspeed)) {
@@ -81,6 +82,7 @@ public class tele_drive extends Command {
 
   public double calculateRotation(double input, double cspeed) {
     double calculated_speed = 0;
+    input = MathUtil.applyDeadband(input, 0.05);
     if (input*cspeed>0) {
       if (Math.abs(input) > Math.abs(cspeed)) {
         calculated_speed = Math.min(cspeed+SpeedConstants.kDRIVE_TRAIN_ROT_ACCEL, input);
@@ -104,6 +106,8 @@ public class tele_drive extends Command {
 
   public double calculateGyroDrive(double input_x, double input_y, double cspeed, int dir) {
     double calculated_speed = 0;
+    input_x = MathUtil.applyDeadband(input_x, 0.05);
+    input_y = MathUtil.applyDeadband(input_y, 0.05);
     double angle = Globals.gyro.getAngle();
 
     if (dir == 0) {
